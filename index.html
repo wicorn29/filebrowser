@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    background-color: #f4f4f4;
+  }
+
+  #container {
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+  }
+
+  h2 {
+    margin: 0 0 15px;
+  }
+
+  ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 5px;
+  }
+
+  input[type="file"] {
+    margin-right: 10px;
+  }
+
+  button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 4px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+  }
+
+  button:hover {
+    background-color: #0056b3;
+  }
+</style>
+</head>
+<body>
+
+<div id="container">
+  <h2>File Browser</h2>
+
+  <div>
+    <input type="file" id="fileInput">
+    <button onclick="clearFiles()">Clear Files</button>
+  </div>
+
+  <div id="fileList">
+  </div>
+</div>
+
+<script>
+  const fileInput = document.getElementById("fileInput");
+  const fileList = document.getElementById("fileList");
+
+  fileInput.addEventListener("change", handleFileSelect);
+
+  function handleFileSelect(event) {
+    const files = event.target.files;
+
+    if (files.length === 0) {
+      return;
+    }
+
+    const ul = document.createElement("ul");
+
+    for (let i = 0; i < files.length; i++) {
+      const li = document.createElement("li");
+      li.textContent = files[i].name;
+
+      const downloadButton = document.createElement("button");
+      downloadButton.textContent = "Download";
+      downloadButton.addEventListener("click", () => downloadFile(files[i]));
+
+      li.appendChild(downloadButton);
+      ul.insertBefore(li, ul.firstChild); // Insert at the beginning of the list
+
+      // Convert the file to Base64 and store in a cookie
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        const base64String = event.target.result.split(",")[1];
+        document.cookie = `${files[i].name}=${base64String}`;
+      };
+      reader.readAsDataURL(files[i]);
+    }
+
+    if (fileList.firstChild) {
+      fileList.insertBefore(ul, fileList.firstChild);
+    } else {
+      fileList.appendChild(ul);
+    }
+  }
+
+  function clearFiles() {
+    fileInput.value = "";
+    fileList.innerHTML = "";
+  }
+
+  function downloadFile(file) {
+    const base64String = getCookie(file.name);
+    if (base64String) {
+      const a = document.createElement("a");
+      a.href = "data:application/octet-stream;base64," + base64String;
+      a.download = file.name;
+      a.click();
+    }
+  }
+
+  function getCookie(name) {
+    const cookieString = document.cookie;
+    const cookies = cookieString.split("; ");
+    for (const cookie of cookies) {
+      const [cookieName, cookieValue] = cookie.split("=");
+      if (cookieName === name) {
+        return cookieValue;
+      }
+    }
+    return null;
+  }
+</script>
+
+</body>
+</html>
